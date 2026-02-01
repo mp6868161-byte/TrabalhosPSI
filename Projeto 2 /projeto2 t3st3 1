@@ -1,0 +1,112 @@
+nomes = []
+
+# Função para mostrar o menu de opções do programa
+def mostrar_menu():
+    print("\n=== GESTOR DE NOMES ===")
+    print("1  - Adicionar nome")
+    print("2  - Remover nome")
+    print("3  - Listar todos os nomes")
+    print("4  - Procurar um nome")
+    print("5  - Editar um nome")
+    print("6  - Ordenar nomes (A-Z / Z-A)")
+    print("7  - Mostrar total de nomes")
+    print("8  - Limpar lista")
+    print("9  - Guardar em ficheiro")
+    print("10 - Carregar de ficheiro")
+    print("11 - Sair")
+
+# Função para listar todos os nomes da lista
+def listar_nomes():
+    if not nomes:  # Se a lista estiver vazia
+        print("A lista está vazia.")
+    else:
+        print("\nLista de nomes:")
+        # Enumerar os nomes, mostrando índice + 1
+        for i, n in enumerate(nomes, start=1):
+            print(f"{i}. {n}")
+
+# Ciclo principal do programa - mantém o programa a correr até o utilizador escolher sair
+while True:
+    mostrar_menu()  # Mostra o menu
+    opcao = input("Escolhe uma opção: ")  # Lê a opção do utilizador
+
+    if opcao == "1":
+        nome = input("Nome a adicionar: ").strip()  # Lê o nome e remove espaços no início/fim
+        if nome == "":  # Verifica se o nome não está vazio
+            print("Nome inválido.")
+        else:
+            nomes.append(nome)  # Adiciona o nome à lista
+            print("Nome adicionado.")
+    elif opcao == "2":
+        listar_nomes()  # Mostra a lista antes de remover
+        nome = input("Nome a remover: ").strip()
+        if nome in nomes:  # Verifica se o nome está na lista
+            nomes.remove(nome)  # Remove o nome
+            print("Nome removido.")
+        else:
+            print("Nome não encontrado.")
+
+    elif opcao == "3":
+        listar_nomes()  # Chama a função que lista todos os nomes
+
+    elif opcao == "4":
+        nome = input("Nome a procurar: ").strip()
+        if nome in nomes:
+            print("O nome existe na lista.")
+        else:
+            print("O nome não existe.")
+
+    elif opcao == "5":
+        listar_nomes()  # Mostra a lista antes de editar
+        antigo = input("Nome a alterar: ").strip()
+        if antigo in nomes:  # Verifica se o nome antigo existe
+            novo = input("Novo nome: ").strip()
+            pos = nomes.index(antigo)  # Descobre a posição do nome antigo
+            nomes[pos] = novo  # Substitui pelo novo nome
+            print("Nome alterado.")
+        else:
+            print("Nome não encontrado.")
+
+    elif opcao == "6":
+        print("1 - A-Z")
+        print("2 - Z-A")
+        op = input("Escolha: ")
+        if op == "1":
+            nomes.sort()  # Ordena de A a Z
+            print("Lista ordenada A-Z.")
+        elif op == "2":
+            nomes.sort(reverse=True)  # Ordena de Z a A
+            print("Lista ordenada Z-A.")
+        else:
+            print("Opção inválida.")
+
+    elif opcao == "7":
+        print("Total de nomes:", len(nomes))  # Mostra o tamanho da lista
+
+    elif opcao == "8":
+        nomes.clear()  # Remove todos os nomes
+        print("Lista limpa.")
+  
+    elif opcao == "9":
+        # Abre (ou cria) um ficheiro nomes.txt em modo escrita
+        with open("nomes.txt", "w", encoding="utf-8") as f:
+            for n in nomes:
+                f.write(n + "\n")  # Escreve cada nome numa linha
+        print("Nomes guardados em nomes.txt")
+
+    elif opcao == "10":
+        try:
+            with open("nomes.txt", "r", encoding="utf-8") as f:
+                nomes.clear()  # Limpa a lista antes de carregar
+                for linha in f:
+                    nomes.append(linha.strip())  # Remove espaços e adiciona à lista
+            print("Nomes carregados do ficheiro.")
+        except FileNotFoundError:  # Caso o ficheiro não exista
+            print("Ainda não existe ficheiro guardado.")
+
+    elif opcao == "11":
+        print("Programa terminado.")
+        break  # Sai do ciclo e termina o programa
+
+    else:
+        print("Opção inválida.")
