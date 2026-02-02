@@ -12,7 +12,6 @@ def mostrar_menu():
     print("7  - Mostrar total de nomes")
     print("8  - Limpar lista")
     print("9  - Guardar em ficheiro")
-    print("10 - Carregar de ficheiro")
     print("11 - Sair")
 
 # Função para listar todos os nomes da lista
@@ -37,6 +36,7 @@ while True:
         else:
             nomes.append(nome)  # Adiciona o nome à lista
             print("Nome adicionado.")
+
     elif opcao == "2":
         listar_nomes()  # Mostra a lista antes de remover
         nome = input("Nome a remover: ").strip()
@@ -86,23 +86,13 @@ while True:
     elif opcao == "8":
         nomes.clear()  # Remove todos os nomes
         print("Lista limpa.")
-  
+
     elif opcao == "9":
         # Abre (ou cria) um ficheiro nomes.txt em modo escrita
         with open("nomes.txt", "w", encoding="utf-8") as f:
             for n in nomes:
                 f.write(n + "\n")  # Escreve cada nome numa linha
         print("Nomes guardados em nomes.txt")
-
-    elif opcao == "10":
-        try:
-            with open("nomes.txt", "r", encoding="utf-8") as f:
-                nomes.clear()  # Limpa a lista antes de carregar
-                for linha in f:
-                    nomes.append(linha.strip())  # Remove espaços e adiciona à lista
-            print("Nomes carregados do ficheiro.")
-        except FileNotFoundError:  # Caso o ficheiro não exista
-            print("Ainda não existe ficheiro guardado.")
 
     elif opcao == "11":
         print("Programa terminado.")
