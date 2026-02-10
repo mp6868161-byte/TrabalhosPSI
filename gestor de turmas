@@ -1,0 +1,255 @@
+turma = []
+
+
+# Função que mostra o menu principal
+def mostrar_menu():
+    print("\nGESTOR DE TURMA ")
+    print("1 - Adicionar aluno")
+    print("2 - Listar alunos")
+    print("3 - Procurar aluno")
+    print("4 - Alterar aluno")
+    print("5 - Remover aluno")
+    print("6 - Adicionar nota a aluno")
+    print("7 - Ver notas do aluno")
+    print("8 - Calcular média do aluno")
+    print("9 - Mostrar média de todos os alunos")
+    print("10 - Mostrar melhor aluno")
+    print("11 - Mostrar pior aluno")
+    print("12 - Contar alunos")
+    print("13 - Limpar notas de um aluno")
+    print("0 - Sair")
+
+
+# Fu fr adicionar um new aluno
+def adicionar_aluno():
+    numero = input("diz o numero: ")
+
+    # Verifica se já existe um aluno com esse númber
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            print("Já existe um aluno com esse número.")
+            return
+
+    nome = input("diz o nome: ")
+    idade = input("diz a idade: ")
+
+    # Cria dicionário 
+    aluno = {
+        "numero": numero,
+        "nome": nome,
+        "idade": idade,
+        "notas": []  # Lista vazia 
+    }
+
+    # Adiciona o aluno a class
+    turma.append(aluno)
+    print("pronto ja esta na lista.")
+
+
+# Fu para list all os alunos
+def listar_alunos():
+    if len(turma) == 0:
+        print(" Não existem alunos na turma.")
+        return
+
+    print("\n--- LISTA DE ALUNOS ---")
+    for aluno in turma:
+        print(f"Número: {aluno['numero']} | Nome: {aluno['nome']} | Idade: {aluno['idade']}")
+
+
+# Fu para find um aluno pelo númber
+def procurar_aluno():
+    numero = input("Número do aluno a procurar: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            print("Aluno encontrado:")
+            print(f"Nome: {aluno['nome']}")
+            print(f"Idade: {aluno['idade']}")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Função para alterar dados de um aluno
+def alterar_aluno():
+    numero = input("Número do aluno a alterar: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            print("Deixa em branco para manter o valor actual.")
+
+            novo_nome = input("Novo nome: ")
+            nova_idade = input("Nova idade: ")
+
+            # Só altera se o utilizador escrever algo
+            if novo_nome != "":
+                aluno["nome"] = novo_nome
+            if nova_idade != "":
+                aluno["idade"] = nova_idade
+
+            print("Dados do aluno actualizados.")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Fu pa remove um aluno
+def remover_aluno():
+    numero = input("Número do aluno a remover: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            turma.remove(aluno)
+            print("Aluno removido com sucesso.")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Fu para adicionar uma not 
+def adicionar_nota():
+    numero = input("Número do aluno: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            nota = float(input("Introduz a nota: "))
+            aluno["notas"].append(nota)  # Guarda a nota na lista
+            print("Nota adicionada com sucesso.")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Fu par see as nots de um aluno
+def ver_notas():
+    numero = input("Número do aluno: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            if len(aluno["notas"]) == 0:
+                print("Este aluno não tem notas.")
+            else:
+                print("Notas:", aluno["notas"])
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Fu calcular
+def media_aluno():
+    numero = input("Número do aluno: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            if len(aluno["notas"]) == 0:
+                print("Este aluno não tem notas.")
+            else:
+                media = sum(aluno["notas"]) / len(aluno["notas"])
+                print(f"Média do aluno: {media:.2f}")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# Fu for most para mostrar a média de todos
+def media_todos():
+    print("\nMÉDIA DOS ALUNOS")
+    for aluno in turma:
+        if len(aluno["notas"]) == 0:
+            print(f"{aluno['nome']} - Sem notas")
+        else:
+            media = sum(aluno["notas"]) / len(aluno["notas"])
+            print(f"{aluno['nome']} - Média: {media:.2f}")
+
+
+# Fu para mostrar o mais forte
+def melhor_aluno():
+    melhor = None
+    melhor_media = -1
+
+    for aluno in turma:
+        if len(aluno["notas"]) > 0:
+            media = sum(aluno["notas"]) / len(aluno["notas"])
+            if media > melhor_media:
+                melhor_media = media
+                melhor = aluno
+
+    if melhor is None:
+        print("Nenhum aluno tem notas.")
+    else:
+        print(f"Melhor aluno: {melhor['nome']} com média {melhor_media:.2f}")
+
+
+# Fu para mostrar o mais fraco
+def pior_aluno():
+    pior = None
+    pior_media = 21
+
+    for aluno in turma:
+        if len(aluno["notas"]) > 0:
+            media = sum(aluno["notas"]) / len(aluno["notas"])
+            if media < pior_media:
+                pior_media = media
+                pior = aluno
+
+    if pior is None:
+        print("Nenhum aluno tem notas.")
+    else:
+        print(f"Pior aluno: {pior['nome']} com média {pior_media:.2f}")
+
+
+# Fu que conta how many alunos exist
+def contar_alunos():
+    print(f"Total de alunos na turma: {len(turma)}")
+
+
+# Fu para delta al de notas de um aluno
+def limpar_notas():
+    numero = input("Número do aluno: ")
+
+    for aluno in turma:
+        if aluno["numero"] == numero:
+            aluno["notas"].clear()
+            print("Notas apagadas com sucesso.")
+            return
+
+    print("Aluno não encontrado.")
+
+
+# menu até sair
+while True:
+    mostrar_menu()
+    opcao = input("qual vais escolher ?: ")
+
+    if opcao == "1":
+        adicionar_aluno()
+    elif opcao == "2":
+        listar_alunos()
+    elif opcao == "3":
+        procurar_aluno()
+    elif opcao == "4":
+        alterar_aluno()
+    elif opcao == "5":
+        remover_aluno()
+    elif opcao == "6":
+        adicionar_nota()
+    elif opcao == "7":
+        ver_notas()
+    elif opcao == "8":
+        media_aluno()
+    elif opcao == "9":
+        media_todos()
+    elif opcao == "10":
+        melhor_aluno()
+    elif opcao == "11":
+        pior_aluno()
+    elif opcao == "12":
+        contar_alunos()
+    elif opcao == "13":
+        limpar_notas()
+    elif opcao == "0":
+        print("A voltar para o lobby")
+        break
+    else:
+        print("errado Tenta outra vez.")
