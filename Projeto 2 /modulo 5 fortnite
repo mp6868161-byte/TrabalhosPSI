@@ -1,0 +1,147 @@
+# Lista onde os produtos da loja vão ser guardados
+produtos = []
+
+
+# ---------------- FUNÇÕES ---------------- #
+
+def adicionar_produto():
+    # Pede o nome do item
+    nome = input("Nome do item: ")
+
+    # Verifica se o item já existe na loja
+    for p in produtos:
+        if p[0].lower() == nome.lower():
+            print("Item já existe na loja!")
+            return  # Sai da função se já existir
+
+    try:
+        # Pede o preço e a quantidade
+        preco = int(input("Preço em V-Bucks: "))
+        quantidade = int(input("Quantidade disponível: "))
+    except ValueError:
+        # Caso o utilizador escreva algo que não seja número
+        print("Valor inválido!")
+        return
+
+    # Pede o tipo do item
+    tipo = input("Tipo (Skin, Emote, Picareta, Asa-delta...): ")
+
+    # Cria o produto como tuplo (nome, preço, quantidade, tipo)
+    produto = (nome, preco, quantidade, tipo)
+
+    # Adiciona o produto à lista
+    produtos.append(produto)
+
+    print("Item adicionado à loja!")
+
+
+def listar_produtos():
+    # Verifica se a loja está vazia
+    if not produtos:
+        print("Loja vazia.")
+        return
+
+    # Mostra todos os produtos
+    print("\n--- LOJA ---")
+    for p in produtos:
+        print(f"Item: {p[0]} | Preço: {p[1]} V-Bucks | Stock: {p[2]} | Tipo: {p[3]}")
+    print("--------------------------")
+
+
+def comprar_item():
+    # Pede o nome do item a comprar
+    nome = input("Nome do item que deseja comprar: ")
+
+    # Procura o item na lista
+    for i in range(len(produtos)):
+        if produtos[i][0].lower() == nome.lower():
+
+            # Verifica se existe stock
+            if produtos[i][2] > 0:
+                nova_qtd = produtos[i][2] - 1  # Reduz 1 unidade
+
+                # Atualiza o tuplo com a nova quantidade
+                produtos[i] = (produtos[i][0], produtos[i][1], nova_qtd, produtos[i][3])
+
+                print("Compra realizada com sucesso!")
+            else:
+                print("Item esgotado!")
+            return
+
+    # Caso o item não exista
+    print("Item não encontrado.")
+
+
+def remover_item():
+    # Pede o nome do item a remover
+    nome = input("Nome do item a remover: ")
+
+    # Procura o item
+    for p in produtos:
+        if p[0].lower() == nome.lower():
+            produtos.remove(p)  # Remove da lista
+            print("Item removido da loja.")
+            return
+
+    print("Item não encontrado.")
+
+
+def valor_total_loja():
+    total = 0
+
+    # Calcula o valor total (preço × quantidade)
+    for p in produtos:
+        total += p[1] * p[2]
+
+    print(f"Valor total da loja: {total} V-Bucks")
+
+
+def listar_por_tipo():
+    # Pede o tipo a procurar
+    tipo = input("Tipo a procurar: ")
+    encontrado = False  # Variável para verificar se encontrou algo
+
+    # Procura todos os produtos desse tipo
+    for p in produtos:
+        if p[3].lower() == tipo.lower():
+            print(f"{p[0]} | {p[1]} V-Bucks | Stock: {p[2]}")
+            encontrado = True
+
+    # Caso não encontre nenhum
+    if not encontrado:
+        print("Nenhum item encontrado desse tipo.")
+
+
+# ---------------- MENU PRINCIPAL ---------------- #
+
+while True:
+    # Mostra o menu
+    print("\n===== LOJA =====")
+    print("1 - Adicionar Item")
+    print("2 - Listar Loja")
+    print("3 - Comprar Item")
+    print("4 - Remover Item")
+    print("5 - Valor Total da Loja")
+    print("6 - Listar por Tipo")
+    print("7 - Sair")
+
+    opcao = input("Escolha uma opção: ")
+
+    # Executa a função correspondente à opção escolhida
+    if opcao == "1":
+        adicionar_produto()
+    elif opcao == "2":
+        listar_produtos()
+    elif opcao == "3":
+        comprar_item()
+    elif opcao == "4":
+        remover_item()
+    elif opcao == "5":
+        valor_total_loja()
+    elif opcao == "6":
+        listar_por_tipo()
+    elif opcao == "7":
+        print("Returnando ao lobby...")
+        break  # Termina o programa
+    else:
+        print("Opção inválida!")
