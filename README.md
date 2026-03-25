@@ -21,9 +21,9 @@ trabalhar com datas em Python
 separar lógica de negócio da interface (menu)
 📂 Estrutura do Projeto
 .
-└──gestor_exemplo
+└──gestor de concertos
      ├── main.py
-     ├── utilizador.py
+     ├── Bilhetes.py
      ├── utils.py
 └── README.md
 main.py
