@@ -1,4 +1,4 @@
-Este projeto foi desenvolvido com fins pedagógicos para alunos do Curso Profissional de Gestão e Programação de Sistemas Informáticos (GPSI) – 10.º ano.
+Este projeto foi desenvolvido com fins pedagógicos por um aluno do Curso Profissional de Gestão e Programação de Sistemas Informáticos (GPSI) – 10.º ano.
 
 O objetivo principal é demonstrar como implementar operações CRUD (Create, Read, Update, Delete) em Python utilizando:
 
