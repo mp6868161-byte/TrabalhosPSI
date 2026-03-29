@@ -1,99 +1,77 @@
-
-# bilhete.py
-# CRUD simples para entidade Bilhete
-# SEM utilização de classes
-# armazenamento em dicionario
-# ==============================
-
-from utils import gerar_id_bilhete  # Note: deve criar esta função no utils.py
-
-bilhetes = {}
+bilheteira = {}
 
 
-# CREATE
-def criar_bilhete(id_concerto, preco, tipo, lugar, fila):
-    # Validação simples de preço (exemplo pedagógico)
-    try:
-        preco_float = float(preco)
-        if preco_float <= 0:
-            print("Erro: O preço deve ser superior a 0.")
-            return
-    except ValueError:
-        print("Erro: Preço inválido.")
+def criar_bilhete(id_bilhete, preco, tipo, lugar, fila, id_concerto):
+    if id_bilhete in bilheteira:
+        print(f"Erro: O ID {id_bilhete} já existe no sistema.")
         return
 
-    id_bilhete = gerar_id_bilhete()
-
-    bilhetes[id_bilhete] = {
-        "id_concerto": id_concerto,
-        "preco": preco_float,
-        "tipo": tipo,  # Ex: VIP, Plateia, Bancada
+    # Adiciona os dados ao dicionário principal
+    bilheteira[id_bilhete] = {
+        "preco": preco,
+        "tipo": tipo,  # Ex: VIP, Plateia, Balcão
         "lugar": lugar,
-        "fila": fila
+        "fila": fila,
+        "id_concerto": id_concerto
     }
+    print(f"Sucesso: Bilhete {id_bilhete} registado com êxito!")
 
-    print(f"Bilhete emitido com sucesso! ID: {id_bilhete}")
 
-
-# READ (listar todos)
 def listar_bilhetes():
-    if not bilhetes:
-        print("Não existem bilhetes emitidos.")
+    if not bilheteira:
+        print("\nA bilheteira está vazia.")
         return
 
-    print("\n--- LISTAGEM DE BILHETES ---")
-    for id_b, dados in bilhetes.items():
-        print(f"ID: {id_b} | Concerto: {dados['id_concerto']} | Tipo: {dados['tipo']} | "
-              f"Fila: {dados['fila']} | Lugar: {dados['lugar']} | Preço: {dados['preco']}€")
+    print("\n--- LISTA DE BILHETES ---")
+    for id_b, info in bilheteira.items():
+        print(f"ID: {id_b} | Concerto: {info['id_concerto']}")
+        print(f"   Tipo: {info['tipo']} | Fila: {info['fila']} | Lugar: {info['lugar']}")
+        print(f"   Preço: {info['preco']}€")
+        print("-" * 25)
 
 
-# READ (consultar individual)
-def consultar_bilhete(id_bilhete):
-    if id_bilhete not in bilhetes:
-        print("Bilhete não encontrado.")
-        return
+def atualizar_bilhete(id_bilhete):
+    if id_bilhete in bilheteira:
+        print(f"A atualizar o bilhete {id_bilhete}. Deixe em branco para manter o valor atual.")
 
-    b = bilhetes[id_bilhete]
-    print(f"\nDetalhes do Bilhete {id_bilhete}:")
-    print(f"ID Concerto: {b['id_concerto']}")
-    print(f"Preço: {b['preco']}€")
-    print(f"Tipo: {b['tipo']}")
-    print(f"Localização: Fila {b['fila']}, Lugar {b['lugar']}")
+        # Exemplo de atualização dinâmica
+        novo_preco = input("Novo preço: ")
+        if novo_preco:
+            bilheteira[id_bilhete]["preco"] = float(novo_preco)
 
+        novo_tipo = input("Novo tipo: ")
+        if novo_tipo:
+            bilheteira[id_bilhete]["tipo"] = novo_tipo
 
-# UPDATE
-def atualizar_bilhete(id_bilhete, id_concerto=None, preco=None, tipo=None, lugar=None, fila=None):
-    if id_bilhete not in bilhetes:
-        print("Bilhete não encontrado.")
-        return
-
-    # Atualização seletiva
-    if id_concerto:
-        bilhetes[id_bilhete]["id_concerto"] = id_concerto
-
-    if preco:
-        try:
-            bilhetes[id_bilhete]["preco"] = float(preco)
-        except ValueError:
-            print("Preço inválido, não atualizado.")
-
-    if tipo:
-        bilhetes[id_bilhete]["tipo"] = tipo
-
-    if lugar:
-        bilhetes[id_bilhete]["lugar"] = lugar
-
-    if fila:
-        bilhetes[id_bilhete]["fila"] = fila
-
-    print(f"Bilhete {id_bilhete} atualizado com sucesso.")
+        print("Bilhete atualizado com sucesso!")
+    else:
+        print("Erro: Bilhete não encontrado.")
 
 
-# DELETE
-def remover_bilhete(id_bilhete):
-    if id_bilhete not in bilhetes:
-        print("Bilhete não encontrado.")
-        return
+def eliminar_bilhete(id_bilhete):
+    if id_bilhete in bilheteira:
+        del bilheteira[id_bilhete]
+        print(f"O bilhete {id_bilhete} foi eliminado.")
+    else:
+        print("Erro: ID inexistente.")
 
-    del bilhetes[id_bilhete]
-    print(f"Bilhete {id_bilhete} anulado/removido.")
+
+# --- Teste do Sistema ---
+
+# 1. CRIAR (Create)
+criar_bilhete(1, 45.50, "Plateia A", "12", "F", "CONCERTO_Bon-jovi_2026")
+criar_bilhete(2, 120.00, "VIP Premium", "01", "A", "concerto_AC/DC_2026")
+
+# 2. LER (Read)
+listar_bilhetes()
+
+# 3. ATUALIZAR (Update)
+# Vamos atualizar o preço do bilhete 1
+bilheteira[1]["preco"] = 50.00
+print("\nPreço do bilhete 1 atualizado manualmente.")
+
+# 4. ELIMINAR (Delete)
+eliminar_bilhete(2)
+
+# Resultado Final
+listar_bilhetes()
