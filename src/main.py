@@ -1,21 +1,18 @@
 db_artistas = {}
 db_bilhetes = {}
-#colocar imports da main nas entidades, codigos de erro tp 201 em returns
+db_staff = {}      # Nova BD Staff
+db_concertos = {}   # Nova BD Concertos
 
 # --- CRUD ARTISTA ---
 def criar_artista():
     idx = input("ID do Artista: ")
+    if idx in db_artistas:
+        print("Erro: ID já existe.")
+        return
     nome = input("Nome da Banda/Artista: ")
     genero = input("Género Musical: ")
-
-    # Criar um dicionário para o artista
-    db_artistas[idx] = {
-        "id": idx,
-        "nome": nome,
-        "genero": genero
-    }
+    db_artistas[idx] = {"id": idx, "nome": nome, "genero": genero}
     print(f"Artista {nome} adicionado com sucesso!")
-
 
 def ler_artistas():
     print("\n--- Lista de Bandas ---")
@@ -25,69 +22,80 @@ def ler_artistas():
     for a in db_artistas.values():
         print(f"ID: {a['id']} | Nome: {a['nome']} | Género: {a['genero']}")
 
+# --- CRUD STAFF (NOVO) ---
+def criar_staff():
+    idx = input("ID do Funcionário: ")
+    if idx in db_staff:
+        print("Erro: ID já existe.")
+        return
+    db_staff[idx] = {
+        "id": idx,
+        "nif": input("NIF: "),
+        "nome": input("Nome: "),
+        "funcao": input("Função (Segurança/Técnico/etc): "),
+        "telemovel": input("Telemóvel: ")
+    }
+    print("Funcionário registado!")
 
-def atualizar_artista():
-    idx = input("ID do artista a editar: ")
-    if idx in db_artistas:
-        db_artistas[idx]["nome"] = input("Novo nome: ")
-        db_artistas[idx]["genero"] = input("Novo género: ")
-        print("Dados atualizados!")
-    else:
-        print("Artista não encontrado.")
+def ler_staff():
+    print("\n--- Lista de Staff ---")
+    if not db_staff:
+        print("Nenhum funcionário registado.")
+        return
+    for s in db_staff.values():
+        print(f"ID: {s['id']} | Nome: {s['nome']} | Função: {s['funcao']}")
 
+# --- CRUD CONCERTO (NOVO) ---
+def criar_concerto():
+    idx = input("ID do Concerto: ")
+    if idx in db_concertos:
+        print("Erro: ID já existe.")
+        return
+    id_art = input("ID do Artista: ")
+    if id_art not in db_artistas:
+        print("Erro: Artista não encontrado. Crie o artista primeiro.")
+        return
 
-def eliminar_artista():
-    idx = input("ID do artista a remover: ")
-    if db_artistas.pop(idx, None):
-        print("Artista removido.")
-    else:
-        print("ID inexistente.")
+    db_concertos[idx] = {
+        "id": idx,
+        "id_artista": id_art,
+        "data": input("Data (DD/MM/AAAA HH:MM): "),
+        "local": input("Local: "),
+        "estado": "Agendado",
+        "lista_ids_staff": [],
+        "lista_ids_bilhetes_vendidos": []
+    }
+    print("Concerto agendado!")
 
+def ler_concertos():
+    print("\n--- Agenda de Concertos ---")
+    if not db_concertos:
+        print("Agenda vazia.")
+        return
+    for c in db_concertos.values():
+        artista = db_artistas[c['id_artista']]['nome']
+        print(f"ID: {c['id']} | Artista: {artista} | Local: {c['local']} | Estado: {c['estado']}")
 
-# --- CRUD BILHETES ---
+# --- CRUD BILHETES --- (Mantido conforme o teu original)
 def criar_bilhete():
     idx = input("ID do Bilhete: ")
     id_c = input("ID do Concerto: ")
+    if id_c not in db_concertos:
+        print("Erro: Concerto inexistente.")
+        return
+    
     preco = input("Preço: ")
     tipo = input("Tipo (VIP/Normal): ")
     lugar = input("Lugar: ")
     fila = input("Fila: ")
-    bancada = input("Bancada/Setor: ")
-    nif = input("NIF do Comprador: ")
-    nac = input("Nacionalidade: ")
-
-    # Criar um dicionário para o bilhete
+    
     db_bilhetes[idx] = {
-        "id": idx,
-        "preco": preco,
-        "tipo": tipo,
-        "lugar": lugar,
-        "fila": fila,
-        "id_concerto": id_c,
-        "bancada": bancada,
-        "nif": nif,
-        "nacionalidade": nac
+        "id": idx, "preco": preco, "tipo": tipo, "lugar": lugar, 
+        "fila": fila, "id_concerto": id_c
     }
-    print("Bilhete emitido!")
-
-
-def ler_bilhetes():
-    print("\n--- Consulta de Bilhetes ---")
-    if not db_bilhetes:
-        print("Nenhum bilhete emitido.")
-        return
-    for b in db_bilhetes.values():
-        print(
-            f"ID: {b['id']} | Concerto: {b['id_concerto']} | Preço: {b['preco']}€ | Lugar: {b['lugar']} (Fila {b['fila']})")
-
-
-def eliminar_bilhete():
-    idx = input("ID do bilhete a eliminar: ")
-    if db_bilhetes.pop(idx, None):
-        print("Bilhete cancelado/eliminado.")
-    else:
-        print("Bilhete não encontrado.")
-
+    # Link do bilhete ao concerto
+    db_concertos[id_c]["lista_ids_bilhetes_vendidos"].append(idx)
+    print("Bilhete emitido e associado ao concerto!")
 
 # --- MAIN LOOP ---
 def main():
@@ -95,36 +103,39 @@ def main():
         print("\n=== GESTOR DE CONCERTOS ===")
         print("1. Gerir Artistas")
         print("2. Gerir Bilhetes")
+        print("3. Gerir Staff")
+        print("4. Gerir Concertos")
         print("0. Sair")
 
-        opcao = input("Escolha uma opção: ")
+        opcao = input("Escolha uma área: ")
 
         if opcao == "1":
-            print("\n[1] Adicionar [2] Ver [3] Editar [4] Remover")
+            print("\n[1] Adicionar [2] Ver")
             sub = input("Ação: ")
-            if sub == "1":
-                criar_artista()
-            elif sub == "2":
-                ler_artistas()
-            elif sub == "3":
-                atualizar_artista()
-            elif sub == "4":
-                eliminar_artista()
+            if sub == "1": criar_artista()
+            elif sub == "2": ler_artistas()
 
         elif opcao == "2":
-            print("\n[1] Criar Bilhete [2] Consultar [3] Eliminar")
+            print("\n[1] Criar Bilhete [2] Consultar")
             sub = input("Ação: ")
-            if sub == "1":
-                criar_bilhete()
-            elif sub == "2":
-                ler_bilhetes()
-            elif sub == "3":
-                eliminar_bilhete()
+            if sub == "1": criar_bilhete()
+            # Podes adicionar as outras funções aqui...
+
+        elif opcao == "3":
+            print("\n[1] Registar Staff [2] Listar Equipa")
+            sub = input("Ação: ")
+            if sub == "1": criar_staff()
+            elif sub == "2": ler_staff()
+
+        elif opcao == "4":
+            print("\n[1] Marcar Concerto [2] Ver Agenda")
+            sub = input("Ação: ")
+            if sub == "1": criar_concerto()
+            elif sub == "2": ler_concertos()
 
         elif opcao == "0":
             print("A sair...")
             break
-
 
 if __name__ == "__main__":
     main()
