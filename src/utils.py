@@ -1,79 +1,72 @@
-import utils
+import datetime
+import os
 
-artistas = {}
+# --- UTILITÁRIOS DE SISTEMA ---
 
-
-def menu():
-    print("\n=== GESTOR DE CONCERTOS ===")
-    print("1. Adicionar Artista")
-    print("2. Ver Artistas/Bandas")
-    print("5. Criar Bilhete para Artista")
-    print("0. Sair")
-    return input("Escolha uma opção: ")
+def limpar_terminal():
+    """Limpa o ecrã do terminal conforme o Sistema Operativo."""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
-def adicionar_artista():
-    print("\n--- Novo Artista ---")
-    nome = input("Nome do Artista/Banda: ")
-    genero = input("Género Musical: ")
+def exibir_cabecalho(titulo):
+    """Cria um cabeçalho visual para os menus."""
+    print(f"\n{'-' * 30}")
+    print(f"{titulo.upper().center(30)}")
+    print(f"{'-' * 30}")
 
-    # CORREÇÃO: Usamos o módulo utils + a função lá dentro
-    id_novo = utils.gerar_id_utilizador()
 
-    artistas[id_novo] = {
-        "nome": nome,
-        "genero": genero,
-        "bilhetes": []
+# --- VALIDAÇÕES ---
+
+def validar_data(data_texto):
+    """Verifica se a data está no formato AAAA-MM-DD e se é válida."""
+    try:
+        datetime.datetime.strptime(data_texto, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+
+
+def validar_nif(nif):
+    """Verifica se o NIF tem exatamente 9 dígitos numéricos."""
+    return nif.isdigit() and len(nif) == 9
+
+
+def validar_telemovel(numero):
+    """Verifica se o telemóvel tem 9 dígitos."""
+    return numero.isdigit() and len(numero) == 9
+
+
+# --- GERAÇÃO DE IDS ---
+
+def gerar_id(prefixo, base_dados):
+    """
+    Gera um ID automático baseado no prefixo e no tamanho da base de dados.
+    Ex: gerar_id("S", db_staff) -> "S001"
+    """
+    proximo_numero = len(base_dados) + 1
+    return f"{prefixo}{proximo_numero:03d}"
+
+
+# --- TRATAMENTO DE INPUTS ---
+
+def ler_obrigatorio(mensagem):
+    """Garante que o utilizador não deixa o campo vazio."""
+    while True:
+        valor = input(mensagem).strip()
+        if valor:
+            return valor
+        print("Erro: Este campo é obrigatório!")
+
+
+# --- CÓDIGOS DE STATUS / FEEDBACK ---
+
+def feedback(codigo):
+    """Mapeia os códigos de status para mensagens de texto simples."""
+    mensagens = {
+        200: "Sucesso: Operação realizada.",
+        201: "Sucesso: Registo criado.",
+        400: "Erro: Dados inválidos (verifique NIF, data ou telemóvel).",
+        404: "Erro: Registo não encontrado.",
+        409: "Erro: ID já existente no sistema."
     }
-    print(f"Sucesso! {nome} registado com ID: {id_novo}")
-
-
-def listar_artistas():
-    print("\n--- Lista de Bandas ---")
-    if not artistas:
-        print("Nenhum artista registado.")
-    for id_art, info in artistas.items():
-        print(f"ID: {id_art} | Nome: {info['nome']} | Género: {info['genero']} | Bilhetes: {len(info['bilhetes'])}")
-
-
-def criar_bilhete():
-    listar_artistas()
-    if not artistas: return
-
-    id_art = input("\nID do artista para o bilhete (ex: U001): ").upper()
-
-    if id_art in artistas:
-        preco = input("Preço do bilhete: ")
-        lugar = input("Lugar/Fila: ")
-        data = input("Data do Concerto (AAAA-MM-DD): ")
-
-        # CORREÇÃO: Usamos a função de validar_data do utils
-        if utils.validar_data(data):
-            bilhete = {
-                "id_bilhete": len(artistas[id_art]["bilhetes"]) + 1,
-                "preco": preco,
-                "lugar": lugar,
-                "data": data
-            }
-            artistas[id_art]["bilhetes"].append(bilhete)
-            print("Bilhete criado com sucesso!")
-        else:
-            print("Erro: Data inválida!")
-    else:
-        print("Artista não encontrado.")
-
-
-# --- Ciclo Principal ---
-while True:
-    opcao = menu()
-    if opcao == "1":
-        adicionar_artista()
-    elif opcao == "2":
-        listar_artistas()
-    elif opcao == "5":
-        criar_bilhete()
-    elif opcao == "0":
-        print("A sair...")
-        break
-    else:
-        print("Opção inválida.")
+    print(mensagens.get(codigo, f"Status {codigo}"))
