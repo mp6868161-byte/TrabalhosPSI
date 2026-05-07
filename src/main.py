@@ -1,7 +1,7 @@
 db_artistas = {}
 db_bilhetes = {}
-db_staff = {}      # Nova BD Staff
-db_concertos = {}   # Nova BD Concertos
+db_staff = {}      
+db_concertos = {}   
 
 # --- CRUD ARTISTA ---
 def criar_artista():
