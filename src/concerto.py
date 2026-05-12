@@ -46,7 +46,7 @@ def guardar_concertos(concertos_db):
 # --- CRUD CONCERTO ---
 
 def marcar_concerto(id_c, id_artista, data, local):
-    """Create: Regista um novo concerto de rock."""
+    """Create: Regista um novo concerto."""
     if id_c in concertos_db:
         print(f"Erro: O concerto {id_c} já existe.")
         return
@@ -67,8 +67,12 @@ def marcar_concerto(id_c, id_artista, data, local):
 def listar_agenda():
     """Read: Lista a agenda de rock."""
     print("\n" + "=" * 55)
-    print(" TOUR DATES - ROCK MANAGER ")
+    print("🤘 TOUR DATES - ROCK MANAGER 🤘")
     print("=" * 55)
+    if not concertos_db:
+        print("Agenda vazia.")
+        return
+
     for id_c, info in concertos_db.items():
         banda = artistas_db[info['id_artista']]['nome']
         genero = artistas_db[info['id_artista']]['genero']

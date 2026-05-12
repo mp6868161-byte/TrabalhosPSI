@@ -23,7 +23,7 @@ def criar_artista(nome, genero, nacionalidade, hora_concerto):
         "nome": nome,
         "genero": genero,
         "nacionalidade": nacionalidade,
-        "hora_concerto": hora_concerto
+        "hora_concerto": hora
     }
     artistas.append(novo_artista)
     proximo_id += 1
