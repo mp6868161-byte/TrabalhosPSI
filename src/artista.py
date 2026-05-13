@@ -1,59 +1,130 @@
 import json
 import os
+import utils
 
-FICHEIRO_DADOS = "artistas.json"
+FICHEIRO_ARTISTAS = "artistas.json"
+db_artistas = {}
 
-def carregar_dados():
-    """Carrega artistas e próximo ID do ficheiro JSON."""
-    if os.path.exists(FICHEIRO_DADOS):
-        with open(FICHEIRO_DADOS, "r", encoding="utf-8") as f:
-            dados = json.load(f)
-            return dados.get("artistas", []), dados.get("proximo_id", 1)
-    return [], 1
+def guardar_artistas():
+    try:
+        with open(FICHEIRO_ARTISTAS, "w", encoding="utf-8") as ficheiro:
+            json.dump(db_artistas, ficheiro, indent=4, ensure_ascii=False)
+    except IOError as e:
+        print(f"Erro ao guardar artistas: {e}")
 
-def guardar_dados(artistas, proximo_id):
-    """Guarda artistas e próximo ID no ficheiro JSON."""
-    with open(FICHEIRO_DADOS, "w", encoding="utf-8") as f:
-        json.dump({"artistas": artistas, "proximo_id": proximo_id}, f, ensure_ascii=False, indent=4)
+def carregar_artistas():
+    global db_artistas
+    try:
+        if os.path.exists(FICHEIRO_ARTISTAS):
+            with open(FICHEIRO_ARTISTAS, "r", encoding="utf-8") as ficheiro:
+                db_artistas = json.load(ficheiro)
+        else:
+            db_artistas = {}
+    except (json.JSONDecodeError, IOError):
+        db_artistas = {}
 
-def criar_artista(nome, genero, nacionalidade, hora_concerto):
-    global artistas, proximo_id
-    novo_artista = {
-        "id": proximo_id,
+# ==========================
+# CREATE
+# ==========================
+
+def criar_artista():
+    """
+    Cria um novo artista e adiciona ao dicionário.
+    Retorna 201 em caso de sucesso ou 400 se os dados forem inválidos.
+    """
+    carregar_artistas()
+    utils.exibir_cabecalho("Registar Artista")
+
+    id_artista = utils.gerar_id("A", db_artistas)
+    nome = utils.ler_obrigatorio("Nome do Artista/Banda: ")
+    genero = utils.ler_obrigatorio("Género Musical: ")
+
+    db_artistas[id_artista] = {
+        "id": id_artista,
         "nome": nome,
-        "genero": genero,
-        "nacionalidade": nacionalidade,
-        "hora_concerto": hora
+        "genero": genero
     }
-    artistas.append(novo_artista)
-    proximo_id += 1
-    guardar_dados(artistas, proximo_id)
-    print(f"'{nome}' adicionado ao lineup das {hora_concerto}!")
-    return novo_artista
 
-def listar_apenas_rock():
-    print("\n--- LINEUP: PALCO ROCK ---")
-    lista_rock = []
-    for artista in artistas:
-        if "rock" in artista["genero"].lower():
-            formato = (f"[{artista['hora_concerto']}] ID: {artista['id']} | "
-                       f"{artista['nome'].upper()} ({artista['genero']}) - "
-                       f"{artista['nacionalidade']}")
-            print(formato)
-            lista_rock.append(artista)
-    if not lista_rock:
-        print("Nenhum artista de Rock escalado ainda.")
-    return lista_rock
+    guardar_artistas()
+    print(f"ID atribuído: {id_artista}")
+    return 201
 
-# --- Carrega dados persistidos (ou começa do zero) ---
-artistas, proximo_id = carregar_dados()
+# ==========================
+# READ ALL
+# ==========================
 
-# --- Execução ---
-artista1 = criar_artista("Jorge Ben Jor", "Samba-Rock", "Brasil", "21:00")
-criar_artista("Arctic Monkeys", "Indie Rock", "UK", "23:30")
-criar_artista("Bon-jovi", "Hard Rock", "EUA", "01:00")
-criar_artista("AC/DC", "Hard Rock", "Austrália", "22:00")
+def ler_artistas():
+    """
+    Lista todos os artistas registados.
+    Retorna 200 se existirem dados ou 404 se estiver vazio.
+    """
+    carregar_artistas()
+    utils.exibir_cabecalho("Lista de Artistas")
 
-apenas_rock = listar_apenas_rock()
-print(f"\nTotal de artistas rock: {len(apenas_rock)}")
-print(f"Total de artistas no lineup: {len(artistas)}")
+    if not db_artistas:
+        return 404
+
+    for art in db_artistas.values():
+        print(f"ID: {art['id']} | Nome: {art['nome']} | Género: {art['genero']}")
+
+    return 200
+
+# ==========================
+# READ ONE
+# ==========================
+
+def consultar_artista(id_artista):
+    """
+    Consulta um artista pelo ID.
+    Retorna 200 e os dados, ou 404 se não existir.
+    """
+    carregar_artistas()
+
+    if id_artista not in db_artistas:
+        return 404, "Artista não encontrado."
+
+    return 200, db_artistas[id_artista]
+
+# ==========================
+# UPDATE
+# ==========================
+
+def atualizar_artista():
+    """
+    Atualiza os dados de um artista existente.
+    """
+    carregar_artistas()
+    utils.exibir_cabecalho("Atualizar Artista")
+
+    id_procura = input("Introduza o ID do artista a editar: ").strip()
+
+    if id_procura not in db_artistas:
+        return 404
+
+    print(f"Dados atuais -> Nome: {db_artistas[id_procura]['nome']} | Género: {db_artistas[id_procura]['genero']}")
+
+    db_artistas[id_procura]["nome"] = utils.ler_obrigatorio("Novo Nome: ")
+    db_artistas[id_procura]["genero"] = utils.ler_obrigatorio("Novo Género: ")
+
+    guardar_artistas()
+    return 200
+
+# ==========================
+# DELETE
+# ==========================
+
+def eliminar_artista():
+    """
+    Remove um artista do sistema.
+    """
+    carregar_artistas()
+    utils.exibir_cabecalho("Eliminar Artista")
+
+    id_procura = input("Introduza o ID do artista a remover: ").strip()
+
+    if id_procura not in db_artistas:
+        return 404
+
+    del db_artistas[id_procura]
+    guardar_artistas()
+    return 200
