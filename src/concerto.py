@@ -1,59 +1,68 @@
 import json
 import os
 
-FICHEIRO_ARTISTAS = "artistas_db.json"
 FICHEIRO_CONCERTOS = "concertos_db.json"
+FICHEIRO_ARTISTAS = "artistas_db.json"
 
-# --- PERSISTÊNCIA ---
+concertos_db = {}
+artistas_db = {}
 
-def carregar_artistas():
-    if os.path.exists(FICHEIRO_ARTISTAS):
-        with open(FICHEIRO_ARTISTAS, "r", encoding="utf-8") as f:
-            return {int(k): v for k, v in json.load(f).items()}
-    # Dados iniciais por defeito
-    return {
-        10: {"nome": "Xutos & Pontapés", "genero": "Rock Português"},
-        11: {"nome": "AC/DC", "genero": "Hard Rock"},
-        12: {"nome": "Arctic Monkeys", "genero": "Indie Rock"},
-        13: {"nome": "The Rolling Stones", "genero": "Classic Rock"},
-        14: {"nome": "Ornatos Alberti", "genero": "Rock Alternativo"}
-    }
+# ==========================
+# Persistência
+# ==========================
 
-def guardar_artistas(artistas_db):
-    with open(FICHEIRO_ARTISTAS, "w", encoding="utf-8") as f:
-        json.dump(artistas_db, f, ensure_ascii=False, indent=4)
+def guardar_concertos():
+    try:
+        with open(FICHEIRO_CONCERTOS, "w", encoding="utf-8") as ficheiro:
+            json.dump(concertos_db, ficheiro, indent=4, ensure_ascii=False)
+    except IOError as e:
+        print(f"Erro ao guardar concertos: {e}")
 
 def carregar_concertos():
-    if os.path.exists(FICHEIRO_CONCERTOS):
-        with open(FICHEIRO_CONCERTOS, "r", encoding="utf-8") as f:
-            return {int(k): v for k, v in json.load(f).items()}
-    # Dados iniciais por defeito
-    return {
-        100: {
-            "id_artista": 10,
-            "ids_staff": [1, 2],
-            "data": "2024-06-15 21:00",
-            "local": "Estádio do Restelo",
-            "estado": "Agendado",
-            "bilhetes_vendidos": 15000
-        }
-    }
+    global concertos_db
+    try:
+        if os.path.exists(FICHEIRO_CONCERTOS):
+            with open(FICHEIRO_CONCERTOS, "r", encoding="utf-8") as ficheiro:
+                concertos_db = json.load(ficheiro)
+        else:
+            concertos_db = {}
+    except (json.JSONDecodeError, IOError):
+        concertos_db = {}
 
-def guardar_concertos(concertos_db):
-    with open(FICHEIRO_CONCERTOS, "w", encoding="utf-8") as f:
-        json.dump(concertos_db, f, ensure_ascii=False, indent=4)
+def guardar_artistas():
+    try:
+        with open(FICHEIRO_ARTISTAS, "w", encoding="utf-8") as ficheiro:
+            json.dump(artistas_db, ficheiro, indent=4, ensure_ascii=False)
+    except IOError as e:
+        print(f"Erro ao guardar artistas: {e}")
 
-# --- CRUD CONCERTO ---
+def carregar_artistas():
+    global artistas_db
+    try:
+        if os.path.exists(FICHEIRO_ARTISTAS):
+            with open(FICHEIRO_ARTISTAS, "r", encoding="utf-8") as ficheiro:
+                artistas_db = json.load(ficheiro)
+        else:
+            artistas_db = {}
+    except (json.JSONDecodeError, IOError):
+        artistas_db = {}
 
-def marcar_concerto(id_c, id_artista, data, local):
-    """Create: Regista um novo concerto."""
-    if id_c in concertos_db:
-        print(f"Erro: O concerto {id_c} já existe.")
-        return
-    if id_artista not in artistas_db:
-        print(f"Erro: Banda com ID {id_artista} não encontrada.")
-        return
-    concertos_db[id_c] = {
+# ==========================
+# CREATE
+# ==========================
+
+def marcar_concerto(id_concerto, id_artista, data, local):
+    carregar_concertos()
+    carregar_artistas()
+
+    if id_concerto in concertos_db:
+        return 409, f"Já existe um concerto com o ID {id_concerto}."
+
+    if str(id_artista) not in artistas_db:
+        return 404, f"Artista com ID {id_artista} não encontrado."
+
+    concertos_db[id_concerto] = {
+        "id": id_concerto,
         "id_artista": id_artista,
         "ids_staff": [],
         "data": data,
@@ -61,62 +70,72 @@ def marcar_concerto(id_c, id_artista, data, local):
         "estado": "Agendado",
         "bilhetes_vendidos": 0
     }
-    guardar_concertos(concertos_db)
-    print(f"Concerto de '{artistas_db[id_artista]['nome']}' agendado para {local}!")
 
-def listar_agenda():
-    """Read: Lista a agenda de rock."""
-    print("\n" + "=" * 55)
-    print("🤘 TOUR DATES - ROCK MANAGER 🤘")
-    print("=" * 55)
+    guardar_concertos()
+    return 201, concertos_db[id_concerto]
+
+# ==========================
+# READ ALL
+# ==========================
+
+def listar_concertos():
+    carregar_concertos()
+
     if not concertos_db:
-        print("Agenda vazia.")
-        return
+        return 404, "Não existem concertos registados."
 
-    for id_c, info in concertos_db.items():
-        banda = artistas_db[info['id_artista']]['nome']
-        genero = artistas_db[info['id_artista']]['genero']
-        print(f"[{info['estado']}] {banda} ({genero})")
-        print(f"      ID: {id_c} | Data: {info['data']} | Local: {info['local']}")
-        print(f"      Público: {info['bilhetes_vendidos']} fãs")
-        print("-" * 40)
+    return 200, concertos_db
 
-def atualizar_concerto(id_c, nova_data=None, novo_local=None, novo_estado=None):
-    """Update: Altera detalhes do show."""
-    if id_c not in concertos_db:
-        print("Erro: Concerto não encontrado.")
-        return
-    if nova_data: concertos_db[id_c]["data"] = nova_data
-    if novo_local: concertos_db[id_c]["local"] = novo_local
-    if novo_estado: concertos_db[id_c]["estado"] = novo_estado
-    guardar_concertos(concertos_db)
-    print(f"Concerto {id_c} atualizado.")
+# ==========================
+# READ ONE
+# ==========================
 
-def cancelar_concerto(id_c):
-    """Delete: Remove o concerto."""
-    if id_c in concertos_db:
-        banda = artistas_db[concertos_db[id_c]['id_artista']]['nome']
-        del concertos_db[id_c]
-        guardar_concertos(concertos_db)
-        print(f"Concerto de {banda} cancelado.")
-    else:
-        print("Erro: Concerto não encontrado.")
+def consultar_concerto(id_concerto):
+    carregar_concertos()
 
-# --- Carrega dados persistidos (ou dados iniciais se for a primeira execução) ---
-artistas_db = carregar_artistas()
-concertos_db = carregar_concertos()
+    if id_concerto not in concertos_db:
+        return 404, "Concerto não encontrado."
 
-# Garante que os ficheiros existem desde o início
-guardar_artistas(artistas_db)
-guardar_concertos(concertos_db)
+    return 200, concertos_db[id_concerto]
 
-# --- TESTE DAS BANDAS ---
-if __name__ == "__main__":
-    marcar_concerto(101, 11, "2024-07-10 20:00", "Passeio Marítimo de Algés")
-    marcar_concerto(102, 14, "2024-09-20 22:00", "Coliseu Porto")
+# ==========================
+# UPDATE
+# ==========================
 
-    concertos_db[101]["bilhetes_vendidos"] = 55000
-    guardar_concertos(concertos_db)
+def atualizar_concerto(id_concerto, id_artista=None, data=None, local=None, estado=None, bilhetes_vendidos=None):
+    carregar_concertos()
+    carregar_artistas()
 
-    atualizar_concerto(101, novo_estado="SOLDOUT")
-    listar_agenda()
+    if id_concerto not in concertos_db:
+        return 404, "Concerto não encontrado."
+
+    if id_artista is not None:
+        if str(id_artista) not in artistas_db:
+            return 404, f"Artista com ID {id_artista} não encontrado."
+        concertos_db[id_concerto]["id_artista"] = id_artista
+
+    if data is not None:
+        concertos_db[id_concerto]["data"] = data
+    if local is not None:
+        concertos_db[id_concerto]["local"] = local
+    if estado is not None:
+        concertos_db[id_concerto]["estado"] = estado
+    if bilhetes_vendidos is not None:
+        concertos_db[id_concerto]["bilhetes_vendidos"] = bilhetes_vendidos
+
+    guardar_concertos()
+    return 200, concertos_db[id_concerto]
+
+# ==========================
+# DELETE
+# ==========================
+
+def cancelar_concerto(id_concerto):
+    carregar_concertos()
+
+    if id_concerto not in concertos_db:
+        return 404, "Concerto não encontrado."
+
+    concerto_removido = concertos_db.pop(id_concerto)
+    guardar_concertos()
+    return 200, concerto_removido
