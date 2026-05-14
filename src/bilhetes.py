@@ -1,81 +1,111 @@
 import json
 import os
 
-FICHEIRO_DADOS = "bilheteira.json"
+FICHEIRO_BILHETES = "bilheteira.json"
+bilheteira = {}
 
-def carregar_dados():
-    """Carrega bilheteira do ficheiro JSON."""
-    if os.path.exists(FICHEIRO_DADOS):
-        with open(FICHEIRO_DADOS, "r", encoding="utf-8") as f:
-            dados = json.load(f)
-            # As chaves do JSON são sempre strings; converte para int
-            return {int(k): v for k, v in dados.items()}
-    return {}
+# ==========================
+# Persistência
+# ==========================
 
-def guardar_dados(bilheteira):
-    """Guarda bilheteira no ficheiro JSON."""
-    with open(FICHEIRO_DADOS, "w", encoding="utf-8") as f:
-        json.dump(bilheteira, f, ensure_ascii=False, indent=4)
+def guardar_bilhetes():
+    try:
+        with open(FICHEIRO_BILHETES, "w", encoding="utf-8") as ficheiro:
+            json.dump(bilheteira, ficheiro, indent=4, ensure_ascii=False)
+    except IOError as e:
+        print(f"Erro ao guardar bilhetes: {e}")
+
+def carregar_bilhetes():
+    global bilheteira
+    try:
+        if os.path.exists(FICHEIRO_BILHETES):
+            with open(FICHEIRO_BILHETES, "r", encoding="utf-8") as ficheiro:
+                bilheteira = json.load(ficheiro)
+        else:
+            bilheteira = {}
+    except (json.JSONDecodeError, IOError):
+        bilheteira = {}
+
+# ==========================
+# CREATE
+# ==========================
 
 def criar_bilhete(id_bilhete, preco, tipo, lugar, fila, id_concerto):
+    carregar_bilhetes()
+
     if id_bilhete in bilheteira:
-        print(f"Erro: O ID {id_bilhete} já existe no sistema.")
-        return
+        return 409, f"Já existe um bilhete com o ID {id_bilhete}."
+
     bilheteira[id_bilhete] = {
+        "id": id_bilhete,
         "preco": preco,
         "tipo": tipo,
         "lugar": lugar,
         "fila": fila,
         "id_concerto": id_concerto
     }
-    guardar_dados(bilheteira)
-    print(f"Sucesso: Bilhete {id_bilhete} registado com êxito!")
+
+    guardar_bilhetes()
+    return 201, bilheteira[id_bilhete]
+
+# ==========================
+# READ ALL
+# ==========================
 
 def listar_bilhetes():
-    if not bilheteira:
-        print("\nA bilheteira está vazia.")
-        return
-    print("\n--- LISTA DE BILHETES ---")
-    for id_b, info in bilheteira.items():
-        print(f"ID: {id_b} | Concerto: {info['id_concerto']}")
-        print(f"   Tipo: {info['tipo']} | Fila: {info['fila']} | Lugar: {info['lugar']}")
-        print(f"   Preço: {info['preco']}€")
-        print("-" * 25)
+    carregar_bilhetes()
 
-def atualizar_bilhete(id_bilhete):
+    if not bilheteira:
+        return 404, "A bilheteira está vazia."
+
+    return 200, bilheteira
+
+# ==========================
+# READ ONE
+# ==========================
+
+def consultar_bilhete(id_bilhete):
+    carregar_bilhetes()
+
     if id_bilhete not in bilheteira:
-        print("Erro: Bilhete não encontrado.")
-        return
-    print(f"A atualizar o bilhete {id_bilhete}. Deixe em branco para manter o valor atual.")
-    novo_preco = input(f"Novo preço (Atual: {bilheteira[id_bilhete]['preco']}€): ")
-    if novo_preco:
-        bilheteira[id_bilhete]["preco"] = float(novo_preco)
-    novo_tipo = input(f"Novo tipo (Atual: {bilheteira[id_bilhete]['tipo']}): ")
-    if novo_tipo:
-        bilheteira[id_bilhete]["tipo"] = novo_tipo
-    guardar_dados(bilheteira)
-    print("Bilhete atualizado com sucesso!")
+        return 404, "Bilhete não encontrado."
+
+    return 200, bilheteira[id_bilhete]
+
+# ==========================
+# UPDATE
+# ==========================
+
+def atualizar_bilhete(id_bilhete, preco=None, tipo=None, lugar=None, fila=None, id_concerto=None):
+    carregar_bilhetes()
+
+    if id_bilhete not in bilheteira:
+        return 404, "Bilhete não encontrado."
+
+    if preco is not None:
+        bilheteira[id_bilhete]["preco"] = preco
+    if tipo is not None:
+        bilheteira[id_bilhete]["tipo"] = tipo
+    if lugar is not None:
+        bilheteira[id_bilhete]["lugar"] = lugar
+    if fila is not None:
+        bilheteira[id_bilhete]["fila"] = fila
+    if id_concerto is not None:
+        bilheteira[id_bilhete]["id_concerto"] = id_concerto
+
+    guardar_bilhetes()
+    return 200, bilheteira[id_bilhete]
+
+# ==========================
+# DELETE
+# ==========================
 
 def eliminar_bilhete(id_bilhete):
-    if id_bilhete in bilheteira:
-        del bilheteira[id_bilhete]
-        guardar_dados(bilheteira)
-        print(f"O bilhete {id_bilhete} foi eliminado.")
-    else:
-        print("Erro: ID inexistente.")
+    carregar_bilhetes()
 
-# --- Carrega dados persistidos (ou começa do zero) ---
-bilheteira = carregar_dados()
+    if id_bilhete not in bilheteira:
+        return 404, "Bilhete não encontrado."
 
-# --- Teste do Sistema ---
-# 1. CRIAR
-criar_bilhete(1, 45.50, "Plateia A", "12", "F", "CONCERTO_Bon-jovi_2026")
-criar_bilhete(2, 120.00, "VIP Premium", "01", "A", "CONCERTO_ACDC_2026")
-# 2. LER
-listar_bilhetes()
-# 3. ATUALIZAR (Usando a função interativa)
-atualizar_bilhete(1)
-# 4. ELIMINAR
-eliminar_bilhete(2)
-# Resultado Final
-listar_bilhetes()
+    bilhete_removido = bilheteira.pop(id_bilhete)
+    guardar_bilhetes()
+    return 200, bilhete_removido
