@@ -2,10 +2,8 @@ import json
 import os
 
 FICHEIRO_CONCERTOS = "concertos_db.json"
-FICHEIRO_ARTISTAS = "artistas_db.json"
 
 concertos_db = {}
-artistas_db = {}
 
 # ==========================
 # Persistência
@@ -29,37 +27,15 @@ def carregar_concertos():
     except (json.JSONDecodeError, IOError):
         concertos_db = {}
 
-def guardar_artistas():
-    try:
-        with open(FICHEIRO_ARTISTAS, "w", encoding="utf-8") as ficheiro:
-            json.dump(artistas_db, ficheiro, indent=4, ensure_ascii=False)
-    except IOError as e:
-        print(f"Erro ao guardar artistas: {e}")
-
-def carregar_artistas():
-    global artistas_db
-    try:
-        if os.path.exists(FICHEIRO_ARTISTAS):
-            with open(FICHEIRO_ARTISTAS, "r", encoding="utf-8") as ficheiro:
-                artistas_db = json.load(ficheiro)
-        else:
-            artistas_db = {}
-    except (json.JSONDecodeError, IOError):
-        artistas_db = {}
-
 # ==========================
 # CREATE
 # ==========================
 
-def marcar_concerto(id_concerto, id_artista, data, local):
+def criar_concerto(id_concerto, id_artista, data, local):
     carregar_concertos()
-    carregar_artistas()
 
     if id_concerto in concertos_db:
         return 409, f"Já existe um concerto com o ID {id_concerto}."
-
-    if str(id_artista) not in artistas_db:
-        return 404, f"Artista com ID {id_artista} não encontrado."
 
     concertos_db[id_concerto] = {
         "id": id_concerto,
@@ -104,16 +80,12 @@ def consultar_concerto(id_concerto):
 
 def atualizar_concerto(id_concerto, id_artista=None, data=None, local=None, estado=None, bilhetes_vendidos=None):
     carregar_concertos()
-    carregar_artistas()
 
     if id_concerto not in concertos_db:
         return 404, "Concerto não encontrado."
 
     if id_artista is not None:
-        if str(id_artista) not in artistas_db:
-            return 404, f"Artista com ID {id_artista} não encontrado."
         concertos_db[id_concerto]["id_artista"] = id_artista
-
     if data is not None:
         concertos_db[id_concerto]["data"] = data
     if local is not None:
