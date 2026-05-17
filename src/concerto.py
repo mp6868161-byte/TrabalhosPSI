@@ -1,113 +1,59 @@
 import json
 import os
+import utils
 
-FICHEIRO_CONCERTOS = "concertos_db.json"
+FICHEIRO_CONCERTOS = "concertos.json"
+db_concertos = {}
 
-concertos_db = {}
-
-# ==========================
-# Persistência
-# ==========================
 
 def guardar_concertos():
-    try:
-        with open(FICHEIRO_CONCERTOS, "w", encoding="utf-8") as ficheiro:
-            json.dump(concertos_db, ficheiro, indent=4, ensure_ascii=False)
-    except IOError as e:
-        print(f"Erro ao guardar concertos: {e}")
+    with open(FICHEIRO_CONCERTOS, "w", encoding="utf-8") as f:
+        json.dump(db_concertos, f, indent=4, ensure_ascii=False)
+
 
 def carregar_concertos():
-    global concertos_db
-    try:
-        if os.path.exists(FICHEIRO_CONCERTOS):
-            with open(FICHEIRO_CONCERTOS, "r", encoding="utf-8") as ficheiro:
-                concertos_db = json.load(ficheiro)
-        else:
-            concertos_db = {}
-    except (json.JSONDecodeError, IOError):
-        concertos_db = {}
+    global db_concertos
+    if os.path.exists(FICHEIRO_CONCERTOS):
+        with open(FICHEIRO_CONCERTOS, "r", encoding="utf-8") as f:
+            db_concertos = json.load(f)
+    else:
+        db_concertos = {}
 
-# ==========================
-# CREATE
-# ==========================
 
-def criar_concerto(id_concerto, id_artista, data, local):
+def criar_concerto(nome, data, local, id_artista):
     carregar_concertos()
+    id_c = utils.gerar_id("C", db_concertos)
 
-    if id_concerto in concertos_db:
-        return 409, f"Já existe um concerto com o ID {id_concerto}."
+    novo = {"id": id_c, "nome": nome, "data": data, "local": local, "id_artista": id_artista}
+    db_concertos[id_c] = novo
+    guardar_concertos()
+    return 201, novo
 
-    concertos_db[id_concerto] = {
-        "id": id_concerto,
-        "id_artista": id_artista,
-        "ids_staff": [],
-        "data": data,
-        "local": local,
-        "estado": "Agendado",
-        "bilhetes_vendidos": 0
-    }
+
+def atualizar_concerto(id_c, nome=None, data=None, local=None):
+    carregar_concertos()
+    if id_c not in db_concertos:
+        return 404, "Concerto não encontrado"
+
+    if nome: db_concertos[id_c]["nome"] = nome
+    if data: db_concertos[id_c]["data"] = data
+    if local: db_concertos[id_c]["local"] = local
 
     guardar_concertos()
-    return 201, concertos_db[id_concerto]
+    return 200, db_concertos[id_c]
 
-# ==========================
-# READ ALL
-# ==========================
+
+def eliminar_concerto(id_c):
+    carregar_concertos()
+    if id_c not in db_concertos:
+        return 404, "Concerto não encontrado"
+
+    del db_concertos[id_c]
+    guardar_concertos()
+    return 200, id_c
 
 def listar_concertos():
     carregar_concertos()
-
-    if not concertos_db:
-        return 404, "Não existem concertos registados."
-
-    return 200, concertos_db
-
-# ==========================
-# READ ONE
-# ==========================
-
-def consultar_concerto(id_concerto):
-    carregar_concertos()
-
-    if id_concerto not in concertos_db:
-        return 404, "Concerto não encontrado."
-
-    return 200, concertos_db[id_concerto]
-
-# ==========================
-# UPDATE
-# ==========================
-
-def atualizar_concerto(id_concerto, id_artista=None, data=None, local=None, estado=None, bilhetes_vendidos=None):
-    carregar_concertos()
-
-    if id_concerto not in concertos_db:
-        return 404, "Concerto não encontrado."
-
-    if id_artista is not None:
-        concertos_db[id_concerto]["id_artista"] = id_artista
-    if data is not None:
-        concertos_db[id_concerto]["data"] = data
-    if local is not None:
-        concertos_db[id_concerto]["local"] = local
-    if estado is not None:
-        concertos_db[id_concerto]["estado"] = estado
-    if bilhetes_vendidos is not None:
-        concertos_db[id_concerto]["bilhetes_vendidos"] = bilhetes_vendidos
-
-    guardar_concertos()
-    return 200, concertos_db[id_concerto]
-
-# ==========================
-# DELETE
-# ==========================
-
-def cancelar_concerto(id_concerto):
-    carregar_concertos()
-
-    if id_concerto not in concertos_db:
-        return 404, "Concerto não encontrado."
-
-    concerto_removido = concertos_db.pop(id_concerto)
-    guardar_concertos()
-    return 200, concerto_removido
+    if not db_concertos:
+        return 404, "Não existem concertos agendados."
+    return 200, db_concertos
