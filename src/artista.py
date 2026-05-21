@@ -26,17 +26,6 @@ def carregar_artistas():
     except (json.JSONDecodeError, IOError):
         db_artistas = {}
 
-def carregar_artistas():
-    global db_artistas
-    try:
-        if os.path.exists(FICHEIRO_ARTISTAS):
-            with open(FICHEIRO_ARTISTAS, "r", encoding="utf-8") as ficheiro:
-                db_artistas = json.load(ficheiro)
-        else:
-            db_artistas = {}
-    except (json.JSONDecodeError, IOError):
-        db_artistas = {}
-
 def criar_artista(nome, genero):
     carregar_artistas()
     id_artista = utils.gerar_id("A", db_artistas)
