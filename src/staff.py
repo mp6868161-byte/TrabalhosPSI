@@ -1,114 +1,131 @@
-staff_db = {
-    1: {"nif": "123456789", "nome": "Carlos Silva", "funcao": "Técnico de Som", "telemovel": "912345678"},
-    2: {"nif": "987654321", "nome": "Ana Rita", "funcao": "Segurança", "telemovel": "961234567"}
-}
+import json
+import os
+import logging
 
-artistas_db = {
-    10: {"nome": "The Rock Band", "genero": "Rock"},
-    11: {"nome": "DJ Sunset", "genero": "Electronic"}
-}
+FICHEIRO_STAFF = "staff_db.json"
 
-concertos_db = {
-    100: {
-        "id_artista": 10,
-        "ids_staff": [1, 2],
-        "data": "2024-06-15 21:00",
-        "local": "Altice Arena",
-        "estado": "Agendado",
-        "bilhetes_vendidos": 1500
-    }
-}
+staff_db = {}
 
+logger = logging.getLogger(__name__)
 
-# --- CRUD STAFF ---
+# ==========================
+# Persistência
+# ==========================
+
+def guardar_staff():
+    try:
+        with open(FICHEIRO_STAFF, "w", encoding="utf-8") as ficheiro:
+            json.dump(staff_db, ficheiro, indent=4, ensure_ascii=False)
+    except IOError as e:
+        logger.error(f"guardar_staff(): erro ao guardar staff_db.json — {e}")
+
+def carregar_staff():
+    global staff_db
+    try:
+        if os.path.exists(FICHEIRO_STAFF):
+            with open(FICHEIRO_STAFF, "r", encoding="utf-8") as ficheiro:
+                staff_db = json.load(ficheiro)
+        else:
+            staff_db = {}
+    except (json.JSONDecodeError, IOError):
+        staff_db = {}
+
+# ==========================
+# CREATE
+# ==========================
 
 def criar_staff(nif, nome, funcao, telemovel):
-    id_s = gerar_id_staff()
-    if id_s in staff_db:
-        print(f"Erro: ID {id_s} já existe.")
-        return
-    staff_db[id_s] = {
+    carregar_staff()
+
+    if any(s["nif"] == nif for s in staff_db.values()):
+        logger.warning(f"criar_staff(): NIF duplicado — {nif}")
+        return 409, f"Já existe um membro de staff com o NIF {nif}."
+
+    if not nif or not nome or not funcao or not telemovel:
+        logger.warning("criar_staff(): campos obrigatórios em falta")
+        return 400, "Todos os campos são obrigatórios."
+
+    id_staff = str(max((int(k) for k in staff_db.keys()), default=0) + 1)
+
+    staff_db[id_staff] = {
+        "id": id_staff,
         "nif": nif,
         "nome": nome,
         "funcao": funcao,
         "telemovel": telemovel
     }
-    print(f"Staff '{nome}' registado com sucesso.")
 
+    guardar_staff()
+    logger.info(f"criar_staff(): staff ID {id_staff} registado — {nome}")
+    return 201, staff_db[id_staff]
 
-def listar_staff_concerto(id_concerto):
-    concerto = concertos_db.get(id_concerto)
-    if not concerto:
-        print("Concerto não encontrado.")
-        return
+# ==========================
+# READ ALL
+# ==========================
 
-    print(f"\nEquipa alocada ao Concerto {id_concerto} ({concerto['local']}):")
-    for id_s in concerto["ids_staff"]:
-        s = staff_db.get(id_s)
-        if s:
-            print(f"- ID: {id_s} | Nome: {s['nome']} | Função: {s['funcao']}")
+def listar_staff():
+    carregar_staff()
 
+    if not staff_db:
+        logger.warning("listar_staff(): nenhum membro de staff registado")
+        return 404, "Não existem membros de staff registados."
 
-def atualizar_funcao_staff(id_s, nova_funcao):
-    if id_s in staff_db:
-        staff_db[id_s]["funcao"] = nova_funcao
-        print(f"Função do staff {id_s} atualizada para: {nova_funcao}")
-    else:
-        print("Staff não encontrado.")
+    logger.debug(f"listar_staff(): {len(staff_db)} membros carregados")
+    return 200, staff_db
 
+# ==========================
+# READ ONE
+# ==========================
 
-def remover_staff(id_s):
-    if id_s in staff_db:
-        nome = staff_db[id_s]["nome"]
-        del staff_db[id_s]
-        # Remove o funcionário de qualquer concerto onde estivesse alocado
-        for c_id in concertos_db:
-            if id_s in concertos_db[c_id]["ids_staff"]:
-                concertos_db[c_id]["ids_staff"].remove(id_s)
-        print(f"Staff '{nome}' removido do sistema e de todos os turnos.")
-    else:
-        print("Staff não encontrado.")
+def consultar_staff(id_staff):
+    carregar_staff()
 
+    if id_staff not in staff_db:
+        logger.warning(f"consultar_staff(): staff ID {id_staff} não encontrado")
+        return 404, "Membro de staff não encontrado."
 
-# --- CRUD CONCERTO ---
+    logger.info(f"consultar_staff(): staff ID {id_staff} consultado com sucesso")
+    return 200, staff_db[id_staff]
 
-def criar_concerto(id_c, id_artista, data, local):
-    if id_artista not in artistas_db:
-        print("Erro: Artista não existe na base de dados.")
-        return
-    concertos_db[id_c] = {
-        "id_artista": id_artista,
-        "ids_staff": [],
-        "data": data,
-        "local": local,
-        "estado": "Agendado",
-        "bilhetes_vendidos": 0
-    }
-    print(f"Concerto {id_c} agendado com sucesso.")
+# ==========================
+# UPDATE
+# ==========================
 
+def atualizar_staff(id_staff, nif=None, nome=None, funcao=None, telemovel=None):
+    carregar_staff()
 
-def listar_agenda():
-    print("\n--- AGENDA DE CONCERTOS ---")
-    for id_c, info in concertos_db.items():
-        artista = artistas_db[info['id_artista']]['nome']
-        print(
-            f"ID: {id_c} | Artista: {artista} | Data: {info['data']} | Local: {info['local']} | Estado: {info['estado']}")
+    if id_staff not in staff_db:
+        logger.warning(f"atualizar_staff(): staff ID {id_staff} não encontrado")
+        return 404, "Membro de staff não encontrado."
 
+    if nif is not None:
+        if any(s["nif"] == nif and k != id_staff for k, s in staff_db.items()):
+            logger.warning(f"atualizar_staff(): NIF duplicado — {nif}")
+            return 409, f"Já existe outro membro de staff com o NIF {nif}."
+        staff_db[id_staff]["nif"] = nif
+    if nome is not None:
+        staff_db[id_staff]["nome"] = nome
+    if funcao is not None:
+        staff_db[id_staff]["funcao"] = funcao
+    if telemovel is not None:
+        staff_db[id_staff]["telemovel"] = telemovel
 
-# --- EXECUÇÃO DE EXEMPLO ---
-if __name__ == "__main__":
-    listar_agenda()
+    guardar_staff()
+    logger.info(f"atualizar_staff(): staff ID {id_staff} atualizado com sucesso")
+    return 200, staff_db[id_staff]
 
-    # Adicionar novo staff e alocar ao concerto 100
-    criar_staff(3, "111222333", "João Barman", "Barman", "933222111")
-    concertos_db[100]["ids_staff"].append(3)
+# ==========================
+# DELETE
+# ==========================
 
-    # Ver equipa atualizada
-    listar_staff_concerto(100)
+def remover_staff(id_staff):
+    carregar_staff()
 
-    # Atualizar função
-    atualizar_funcao_staff(1, "Chefe de Som")
+    if id_staff not in staff_db:
+        logger.warning(f"remover_staff(): staff ID {id_staff} não encontrado")
+        return 404, "Membro de staff não encontrado."
 
-    # Remover staff e verificar limpeza
-    remover_staff(2)
-    listar_staff_concerto(100)
+    staff_removido = staff_db.pop(id_staff)
+    guardar_staff()
+    logger.info(f"remover_staff(): staff ID {id_staff} removido com sucesso")
+    return 200, staff_removido
