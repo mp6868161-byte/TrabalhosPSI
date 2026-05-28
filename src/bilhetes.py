@@ -1,10 +1,12 @@
 import json
 import os
+import logging
 import utils
 
 FICHEIRO_BILHETES = "bilheteira.json"
 bilheteira = {}
 
+logger = logging.getLogger(__name__)
 
 # ==========================
 # Persistência
@@ -31,7 +33,6 @@ def carregar_bilhetes():
 def criar_bilhete(preco, tipo, lugar, fila, id_concerto):
     carregar_bilhetes()
 
-    # O ID deve ser gerado automaticamente para seguir o padrão
     id_bilhete = utils.gerar_id("B", bilheteira)
 
     novo_bilhete = {
@@ -44,7 +45,12 @@ def criar_bilhete(preco, tipo, lugar, fila, id_concerto):
     }
 
     bilheteira[id_bilhete] = novo_bilhete
-    guardar_bilhetes()
+
+    try:
+        guardar_bilhetes()
+        logger.info(f"criar_bilhete(): bilhete {id_bilhete} emitido — {tipo}, lugar {lugar}")
+    except IOError as e:
+        logger.error(f"criar_bilhete(): erro ao guardar bilheteira.json — {e}")
 
     return 201, novo_bilhete
 
@@ -56,7 +62,9 @@ def criar_bilhete(preco, tipo, lugar, fila, id_concerto):
 def listar_bilhetes():
     carregar_bilhetes()
     if not bilheteira:
+        logger.warning("listar_bilhetes(): bilheteira vazia")
         return 404, "A bilheteira está vazia."
+    logger.debug(f"listar_bilhetes(): {len(bilheteira)} bilhetes carregados")
     return 200, bilheteira
 
 
@@ -67,7 +75,9 @@ def listar_bilhetes():
 def consultar_bilhete(id_bilhete):
     carregar_bilhetes()
     if id_bilhete not in bilheteira:
+        logger.warning(f"consultar_bilhete(): bilhete {id_bilhete} não encontrado")
         return 404, "Bilhete não encontrado."
+    logger.info(f"consultar_bilhete(): bilhete {id_bilhete} consultado com sucesso")
     return 200, bilheteira[id_bilhete]
 
 
@@ -79,6 +89,7 @@ def atualizar_bilhete(id_bilhete, preco=None, tipo=None, lugar=None, fila=None, 
     carregar_bilhetes()
 
     if id_bilhete not in bilheteira:
+        logger.warning(f"atualizar_bilhete(): bilhete {id_bilhete} não encontrado")
         return 404, "Bilhete não encontrado."
 
     if preco is not None:
@@ -92,7 +103,12 @@ def atualizar_bilhete(id_bilhete, preco=None, tipo=None, lugar=None, fila=None, 
     if id_concerto:
         bilheteira[id_bilhete]["id_concerto"] = id_concerto
 
-    guardar_bilhetes()
+    try:
+        guardar_bilhetes()
+        logger.info(f"atualizar_bilhete(): bilhete {id_bilhete} atualizado com sucesso")
+    except IOError as e:
+        logger.error(f"atualizar_bilhete(): erro ao guardar bilheteira.json — {e}")
+
     return 200, bilheteira[id_bilhete]
 
 
@@ -104,9 +120,15 @@ def eliminar_bilhete(id_bilhete):
     carregar_bilhetes()
 
     if id_bilhete not in bilheteira:
+        logger.warning(f"eliminar_bilhete(): bilhete {id_bilhete} não encontrado")
         return 404, "Bilhete não encontrado."
 
     del bilheteira[id_bilhete]
-    guardar_bilhetes()
+
+    try:
+        guardar_bilhetes()
+        logger.info(f"eliminar_bilhete(): bilhete {id_bilhete} eliminado com sucesso")
+    except IOError as e:
+        logger.error(f"eliminar_bilhete(): erro ao guardar bilheteira.json — {e}")
 
     return 200, id_bilhete
